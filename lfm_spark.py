@@ -56,6 +56,7 @@ def lfm_train():
         submit.append(item_rec)
     df = pd.DataFrame(submit)
     df.to_csv('submit.csv', header=None, index=None)
+
     # Save
     model.save('lda.model')
 
