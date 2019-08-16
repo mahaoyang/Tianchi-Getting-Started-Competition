@@ -6,19 +6,18 @@ import time
 
 
 def timestamp(t):
-    return int(time.mktime(time.strptime(t, "%Y-%m-%d %H:%M:%S")))
+    return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
-df = pd.read_csv("data/Antai_AE_round1_train_20190626.csv", low_memory=False)
-df['buyer_country_id'] = df['buyer_country_id'].map(lambda x: 0 if 'xx' in str(x) else 1)
-df['create_order_time'] = df['create_order_time'].map(lambda x: timestamp(x))
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
+df['time'] = df['time'].map(lambda x: timestamp(x))
 print(len(df))
 ratings = spark.createDataFrame(df)
 (training, test) = ratings.randomSplit([0.8, 0.2])
 
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
-als = ALS(maxIter=4, regParam=0.01, userCol="buyer_admin_id", itemCol="item_id", ratingCol="irank",
+als = ALS(maxIter=4, regParam=0.01, userCol="user_id", itemCol="item_id", ratingCol="behavior_type",
           coldStartStrategy="drop")
 model = als.fit(training)
 model.save('acie.model')
@@ -34,6 +33,9 @@ print("Root-mean-square error = " + str(rmse))
 userRecs = model.recommendForAllUsers(30)
 # Generate top 10 user recommendations for each movie
 movieRecs = model.recommendForAllItems(30)
+
+userRecs.show()
+movieRecs.show()
 
 # Generate top 10 movie recommendations for a specified set of users
 users = ratings.select(als.getUserCol()).distinct().limit(3)
