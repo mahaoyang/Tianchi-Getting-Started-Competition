@@ -9,7 +9,7 @@ def timestamp(t):
     return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
-df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)[:1000]
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
 print(len(df))
@@ -26,7 +26,7 @@ model.save('acie.model')
 
 # Evaluate the model by computing the RMSE on the test data
 predictions = model.transform(test)
-evaluator = RegressionEvaluator(metricName="rmse", labelCol="irank",
+evaluator = RegressionEvaluator(metricName="rmse", labelCol="behavior_type",
                                 predictionCol="prediction")
 rmse = evaluator.evaluate(predictions)
 print("Root-mean-square error = " + str(rmse))
