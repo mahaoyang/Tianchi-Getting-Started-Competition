@@ -1,5 +1,7 @@
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.recommendation import ALS
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import udf
 from spark_session import spark
 import pandas as pd
 import time
@@ -9,18 +11,21 @@ def timestamp(t):
     return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
+udf_timestamp = udf(timestamp, IntegerType())
+
 df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
 print(len(df))
 print(df.dtypes)
 ratings = spark.createDataFrame(df)
+# ratings = ratings.withColumn('time', udf_timestamp('time'))
 (training, test) = ratings.randomSplit([0.8, 0.2])
 
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numBlocks=16, rank=100, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=100, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
