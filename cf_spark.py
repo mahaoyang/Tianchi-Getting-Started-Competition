@@ -31,22 +31,30 @@ evaluator = RegressionEvaluator(metricName="rmse", labelCol="behavior_type",
 rmse = evaluator.evaluate(predictions)
 print("Root-mean-square error = " + str(rmse))
 
-# # Generate top 10 movie recommendations for each user
-# userRecs = model.recommendForAllUsers(30)
+# Generate top 10 movie recommendations for each user
+userRecs = model.recommendForAllUsers(30)
 # # Generate top 10 user recommendations for each movie
 # movieRecs = model.recommendForAllItems(30)
-#
+
+userRecs = userRecs.collect().toPandas()
+userRecs = userRecs.values.tolist()
+ur = []
+for i in userRecs:
+    for ii in i[1]:
+        ur.append({'user_id': i[0], 'item_id': ii[1]})
+ur = pd.DataFrame(ur)
+ur.to_csv('tianchi_mobile_recommendation_predict.csv', index=None, encoding='utf-8')
 # userRecs.show()
 # movieRecs.show()
 
-# Generate top 10 movie recommendations for a specified set of users
-users = ratings.select(als.getUserCol()).distinct().limit(3)
-userSubsetRecs = model.recommendForUserSubset(users, 30)
-# Generate top 10 user recommendations for a specified set of movies
-movies = ratings.select(als.getItemCol()).distinct().limit(3)
-movieSubSetRecs = model.recommendForItemSubset(movies, 30)
+# # Generate top 10 movie recommendations for a specified set of users
+# users = ratings.select(als.getUserCol()).distinct().limit(3)
+# userSubsetRecs = model.recommendForUserSubset(users, 30)
+# # Generate top 10 user recommendations for a specified set of movies
+# movies = ratings.select(als.getItemCol()).distinct().limit(3)
+# movieSubSetRecs = model.recommendForItemSubset(movies, 30)
 
-userSubsetRecs.show(truncate=False)
-movieSubSetRecs.show(truncate=False)
+# userSubsetRecs.show(truncate=False)
+# movieSubSetRecs.show(truncate=False)
 
 spark.stop()
