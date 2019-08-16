@@ -19,8 +19,13 @@ ratings = spark.createDataFrame(df)
 
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
-als = ALS(maxIter=4, regParam=0.01, userCol="user_id", itemCol="item_id", ratingCol="behavior_type",
-          coldStartStrategy="drop")
+als = ALS(
+    numBlocks=16, rank=100, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
+    nonnegative=False,
+    userCol="user_id",
+    itemCol="item_id",
+    ratingCol="behavior_type",
+    coldStartStrategy="drop")
 model = als.fit(training)
 model.save('acie.model')
 
