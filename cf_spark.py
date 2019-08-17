@@ -48,14 +48,15 @@ userRecs = model.recommendForAllUsers(30)
 # # Generate top 10 user recommendations for each movie
 # movieRecs = model.recommendForAllItems(30)
 userRecs.show()
-userRecs = userRecs.toPandas()
-userRecs = userRecs.values.tolist()
-ur = []
-for i in userRecs:
-    for ii in i[1]:
-        ur.append({'user_id': i[0], 'item_id': ii[0]})
-ur = pd.DataFrame(ur)
-ur.to_csv('tianchi_mobile_recommendation_predict.csv', index=None, encoding='utf-8')
+userRecs.write.csv('tianchi_mobile_recommendation_predict.csv')
+# userRecs = userRecs.toPandas()
+# userRecs = userRecs.values.tolist()
+# ur = []
+# for i in userRecs:
+#     for ii in i[1]:
+#         ur.append({'user_id': i[0], 'item_id': ii[0]})
+# ur = pd.DataFrame(ur)
+# ur.to_csv('tianchi_mobile_recommendation_predict.csv', index=None, encoding='utf-8')
 # userRecs.show()
 # movieRecs.show()
 
