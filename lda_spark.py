@@ -12,7 +12,7 @@ from pyspark.ml.clustering import LDA
 from spark_session import spark
 
 
-def lfm_train():
+def lda_train():
     # Loads data.
     dataset = spark.read.format("libsvm").load("train.libsvm", numFeatures=4758484)
 
@@ -65,4 +65,4 @@ def lfm_train():
 
 
 if __name__ == "__main__":
-    lfm_train()
+    lda_train()

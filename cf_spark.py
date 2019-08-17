@@ -19,20 +19,22 @@ df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
 print(len(df))
 print(df.dtypes)
 ratings = spark.createDataFrame(df)
+print('create spark DateFrame')
 # ratings = ratings.withColumn('time', udf_timestamp('time'))
-(training, test) = ratings.randomSplit([0.8, 0.2])
-
+# print('trans time by udf')
+(training, test) = ratings.randomSplit([0.8, 0.2], seed=123)
+print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=100, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=20, maxIter=20, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
     ratingCol="behavior_type",
     coldStartStrategy="drop")
 model = als.fit(training)
-model.save('acie.model')
+# model.save('acie.model')
 
 # Evaluate the model by computing the RMSE on the test data
 predictions = model.transform(test)
@@ -45,7 +47,7 @@ print("Root-mean-square error = " + str(rmse))
 userRecs = model.recommendForAllUsers(30)
 # # Generate top 10 user recommendations for each movie
 # movieRecs = model.recommendForAllItems(30)
-
+userRecs.show()
 userRecs = userRecs.toPandas()
 userRecs = userRecs.values.tolist()
 ur = []
