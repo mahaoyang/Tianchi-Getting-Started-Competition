@@ -9,8 +9,7 @@ from deepctr.inputs import SparseFeat, get_fixlen_feature_names
 if __name__ == "__main__":
 
     data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")
-    sparse_features = ["user_id", "item_id",
-                       "user_geohash", "item_category", "time"]
+    sparse_features = ["user_id", "item_id", "item_category", "time"]
     target = ['behavior_type']
 
     # 1.Label Encoding for sparse features,and do simple Transformation for dense features
