@@ -33,7 +33,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=3, rank=1, maxIter=1, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=40, maxIter=80, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -69,11 +69,11 @@ print("Root-mean-square error = " + str(rmse))
 # # Generate top 10 movie recommendations for a specified set of users
 users = pd.DataFrame(list(set(df['user_id'].values.tolist())))
 users.columns = ['user_id']
-batch_size = 1000
+batch_size = 5000
 for step in range(0, len(users), batch_size):
-    user = users[step, step + batch_size]
+    user = users[step: step + batch_size]
     users = spark.createDataFrame(user)
-    userSubsetRecs = model.recommendForUserSubset(user, 30)
+    userSubsetRecs = model.recommendForUserSubset(user, 100)
     # Generate top 10 user recommendations for a specified set of movies
     # movies = ratings.select(als.getItemCol()).distinct().limit(3)
     # movieSubSetRecs = model.recommendForItemSubset(movies, 30)
