@@ -70,7 +70,7 @@ print("Root-mean-square error = " + str(rmse))
 users = pd.DataFrame(list(set(df['user_id'].values.tolist())))
 users.columns = ['user_id']
 batch_size = 1000
-for step in range(0, len(users), step=batch_size):
+for step in range(0, len(users), batch_size):
     user = users[step, step + batch_size]
     users = spark.createDataFrame(user)
     userSubsetRecs = model.recommendForUserSubset(user, 30)
