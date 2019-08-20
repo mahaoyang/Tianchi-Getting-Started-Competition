@@ -19,7 +19,7 @@ def trans_item(item_res):
 udf_timestamp = udf(timestamp, IntegerType())
 udf_trans_item = udf(trans_item, IntegerType())
 
-df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)[:100]
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
 print(len(df))
@@ -33,7 +33,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=40, maxIter=80, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=1, maxIter=1, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
