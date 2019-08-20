@@ -72,7 +72,7 @@ users.columns = ['user_id']
 batch_size = 5000
 for step in range(0, len(users), batch_size):
     user = users[step: step + batch_size]
-    users = spark.createDataFrame(user)
+    user = spark.createDataFrame(user)
     userSubsetRecs = model.recommendForUserSubset(user, 100)
     # Generate top 10 user recommendations for a specified set of movies
     # movies = ratings.select(als.getItemCol()).distinct().limit(3)
