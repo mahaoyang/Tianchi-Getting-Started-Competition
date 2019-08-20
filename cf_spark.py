@@ -19,7 +19,7 @@ def trans_item(item_res):
 udf_timestamp = udf(timestamp, IntegerType())
 udf_trans_item = udf(trans_item, IntegerType())
 
-df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)[:100]
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
 print(len(df))
@@ -50,12 +50,12 @@ rmse = evaluator.evaluate(predictions)
 print("Root-mean-square error = " + str(rmse))
 
 # Generate top 10 movie recommendations for each user
-userRecs = model.recommendForAllUsers(1)
+# userRecs = model.recommendForAllUsers(1)
 # # Generate top 10 user recommendations for each movie
 # movieRecs = model.recommendForAllItems(30)
-userRecs = userRecs.withColumn('recommendations', udf_trans_item('recommendations'))
-userRecs.write.csv('tianchi_mobile_recommendation_predict.csv', header=None)
-userRecs.show(truncate=False)
+# userRecs = userRecs.withColumn('recommendations', udf_trans_item('recommendations'))
+# userRecs.write.csv('tianchi_mobile_recommendation_predict.csv', header=None)
+# userRecs.show(truncate=False)
 # userRecs = userRecs.collect()
 # ur = []
 # for i in userRecs:
@@ -67,7 +67,7 @@ userRecs.show(truncate=False)
 # movieRecs.show()
 
 # # Generate top 10 movie recommendations for a specified set of users
-# users = ratings.select(als.getUserCol()).distinct().limit(3)
+users = ratings.select(als.getUserCol()).distinct().limit(3).toPandas()
 # userSubsetRecs = model.recommendForUserSubset(users, 30)
 # Generate top 10 user recommendations for a specified set of movies
 # movies = ratings.select(als.getItemCol()).distinct().limit(3)
