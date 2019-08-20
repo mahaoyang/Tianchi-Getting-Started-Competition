@@ -5,13 +5,19 @@ from pyspark.sql.functions import udf
 from spark_session import spark
 import pandas as pd
 import time
+import os
 
 
 def timestamp(t):
     return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
+def trans_item(item_res):
+    return item_res[0]
+
+
 udf_timestamp = udf(timestamp, IntegerType())
+udf_trans_item = udf(trans_item, IntegerType())
 
 df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
@@ -27,7 +33,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=20, maxIter=20, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=1, maxIter=1, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -44,13 +50,13 @@ rmse = evaluator.evaluate(predictions)
 print("Root-mean-square error = " + str(rmse))
 
 # Generate top 10 movie recommendations for each user
-userRecs = model.recommendForAllUsers(30)
+userRecs = model.recommendForAllUsers(1)
 # # Generate top 10 user recommendations for each movie
 # movieRecs = model.recommendForAllItems(30)
-userRecs.show()
-userRecs.write.csv('tianchi_mobile_recommendation_predict.csv')
-# userRecs = userRecs.toPandas()
-# userRecs = userRecs.values.tolist()
+userRecs = userRecs.withColumn('recommendations', udf_trans_item('recommendations'))
+userRecs.write.csv('tianchi_mobile_recommendation_predict.csv', header=None)
+userRecs.show(truncate=False)
+# userRecs = userRecs.collect()
 # ur = []
 # for i in userRecs:
 #     for ii in i[1]:
