@@ -33,7 +33,7 @@ def read(data):
 
 if __name__ == "__main__":
 
-    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")[:2000]
+    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")[:5000]
     data['time'] = data['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
     sparse_features = ["user_id", "item_id", "item_category", "time"]
     target = ['behavior_type']
