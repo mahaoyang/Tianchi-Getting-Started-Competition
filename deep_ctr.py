@@ -31,7 +31,7 @@ def read(data, lbe_store):
 
 if __name__ == "__main__":
 
-    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")[:5000]
+    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")
     data['time'] = data['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
     sparse_features = ["user_id", "item_id", "item_category", "time"]
     target = ['behavior_type']
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     model.compile("adam", "mse", metrics=['mse'], )
 
     history = model.fit(train_model_input, train[target].values,
-                        batch_size=256, epochs=10, verbose=2, validation_split=0.2, )
+                        batch_size=256, epochs=1, verbose=2, validation_split=0.2, )
 
     pred_ans = model.predict(test_model_input, batch_size=256)
     print(pred_ans)
