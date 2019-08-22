@@ -72,7 +72,7 @@ if __name__ == "__main__":
     _, test_model_input = read(test.astype('int32'))
     pred_ans = model.predict(test_model_input, batch_size=256)
     pred_ans = pred_ans.reshape((1, -1)).tolist()[0]
-    test = pd.read_csv('cf_predict.csv')
+    test = pd.read_csv('lgb_predict.csv')
     test['predict'] = pred_ans
     test = test[['user_id', 'item_id', 'predict']]
     test = test.sort_values(['user_id', 'predict'], ascending=[1, 0])
