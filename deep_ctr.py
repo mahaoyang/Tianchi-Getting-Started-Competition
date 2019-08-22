@@ -64,7 +64,7 @@ if __name__ == "__main__":
     print("test MSE", round(mean_squared_error(
         test[target].values, pred_ans), 4))
 
-    test = pd.read_csv('cf_predict.csv')
+    test = pd.read_csv('lgb_predict.csv')
     item = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
     item = item[['item_id', 'item_category']].drop_duplicates('item_id').astype('int32')
     # item = dict(zip(item['item_id'].values.tolist(), item['item_category'].values.tolist()))

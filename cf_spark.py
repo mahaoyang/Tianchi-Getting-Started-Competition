@@ -22,7 +22,7 @@ udf_trans_item = udf(trans_item, IntegerType())
 
 df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
-df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int64')
+df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
 print(len(df))
 print(df.dtypes)
 ratings = spark.createDataFrame(df)
@@ -34,7 +34,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=100, maxIter=500, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=1, maxIter=1, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -68,10 +68,10 @@ print("Root-mean-square error = " + str(rmse))
 # movieRecs.show()
 
 # # Generate top 10 movie recommendations for a specified set of users
-users = pd.DataFrame(list(set(df['user_id'].values.tolist())))
+users = pd.DataFrame(list(set(df['user_id'].values.tolist())))[:5000]
 users.columns = ['user_id']
 batch_size = 1000
-for step in trange(1, len(users)+1, batch_size):
+for step in trange(1, len(users) + 1, batch_size):
     user = users[-(step + batch_size): -step]
     flag = user.values.tolist()
     if flag:
@@ -88,14 +88,15 @@ for step in trange(1, len(users)+1, batch_size):
             for ii in i[1]:
                 ur.append({'user_id': i[0], 'item_id': ii[0]})
         ur = pd.DataFrame(ur)
-        if not os.path.exists('tianchi_mobile_recommendation_predict.csv'):
-            ur.to_csv('tianchi_mobile_recommendation_predict.csv', index=None, encoding='utf-8')
+        # name = 'tianchi_mobile_recommendation_predict.csv'
+        name = 'cf_predict.csv'
+        if not os.path.exists(name):
+            ur.to_csv(name, index=None, encoding='utf-8')
         else:
-            ur.to_csv('tianchi_mobile_recommendation_predict.csv', index=None, header=None, mode='a+',
+            ur.to_csv(name, index=None, header=None, mode='a+',
                       encoding='utf-8')
 
         # userSubsetRecs.show(truncate=False)
         # movieSubSetRecs.show(truncate=False)
-
 
 spark.stop()
