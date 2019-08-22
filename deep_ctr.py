@@ -69,7 +69,13 @@ if __name__ == "__main__":
     item = item[['item_id', 'item_category']].drop_duplicates('item_id').astype('int32')
     # item = dict(zip(item['item_id'].values.tolist(), item['item_category'].values.tolist()))
     test = test.join(item.set_index('item_id'), on='item_id', how='left')
-    test, test_model_input = read(test.astype('int32'))
+    _, test_model_input = read(test.astype('int32'))
     pred_ans = model.predict(test_model_input, batch_size=256)
+    pred_ans = pred_ans.reshape((1, -1)).tolist()[0]
+    test = pd.read_csv('cf_predict.csv')
+    test['predict'] = pred_ans
+    test = test[['user_id', 'item_id', 'predict']]
+    test = test.sort_values('predict', ascending=False).drop_duplicates('user_id')
+    test = test[['user_id', 'item_id']]
+    test.to_csv('submit.csv', index=None)
     print(pred_ans)
-
