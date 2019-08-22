@@ -33,7 +33,7 @@ def read(data):
 
 if __name__ == "__main__":
 
-    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")[:100]
+    data = pd.read_csv("data/tianchi_fresh_comp_train_user.csv")[:2000]
     data['time'] = data['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
     sparse_features = ["user_id", "item_id", "item_category", "time"]
     target = ['behavior_type']
@@ -75,7 +75,9 @@ if __name__ == "__main__":
     test = pd.read_csv('cf_predict.csv')
     test['predict'] = pred_ans
     test = test[['user_id', 'item_id', 'predict']]
-    test = test.sort_values('predict', ascending=False).drop_duplicates('user_id')
+    test = test.sort_values(['user_id', 'predict'], ascending=[1, 0])
+    test = test.groupby(['user_id']).head(2)
+    # test = test.drop_duplicates('user_id')
     test = test[['user_id', 'item_id']]
     test.to_csv('submit.csv', index=None)
     print(pred_ans)
