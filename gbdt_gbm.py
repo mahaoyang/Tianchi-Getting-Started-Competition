@@ -2,10 +2,12 @@
 # -*- encoding: utf-8 -*-
 import time
 import json
+import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegressionCV as lrcv
 
 
 def timestamp(t):
@@ -42,6 +44,11 @@ y_pred = gbm.predict(test_x, num_iteration=gbm.best_iteration)
 print(y_pred)
 # print('The roc of prediction is:', roc_auc_score(test_y, y_pred))
 
+y_pred = gbm.predict(feature, num_iteration=gbm.best_iteration)
+feature['leaf'] = y_pred
+lr_cf = lrcv(Cs=[1], penalty="l2", tol=0.0001, max_iter=500, cv=5).fit(feature.as_matrix(),
+                                                                       np.array(label.values.tolist()).reshape((-1, 1)))
+
 item = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:5000]
 item['time'] = item['time'].apply(lambda x: timestamp(x))
 item = item[['item_id', 'item_category']].drop_duplicates(
@@ -51,11 +58,15 @@ cfp = cfp.merge(item, on='item_id', how='left')
 cfp = cfp[['user_id', 'item_id', 'item_category']]
 cfp['time'] = int(time.time())
 feature = cfp[['user_id', 'item_id', 'item_category', 'time']]
-y_pred = gbm.predict(feature, num_iteration=gbm.best_iteration)
+y_pred = gbm.predict(feature, num_iteration=gbm.best_iteration, pred_leaf=True)
+
 y_pred = y_pred.tolist()
-print('cf in %s' % y_pred)
-lgb_predict = feature[['user_id', 'item_id']]
-lgb_predict['predict'] = y_pred
+print('leaf %s' % y_pred)
+lgb_predict = feature[['user_id', 'item_id', 'item_category', 'time']]
+lgb_predict['leaf'] = y_pred
+
+lr_predict = lr_cf.predict(lgb_predict.fillna(0).as_matrix()).tolist()
+lgb_predict['predict'] = lr_predict
 lgb_predict = lgb_predict.sort_values(['user_id', 'predict'], ascending=[1, 0])
 lgb_predict = lgb_predict.groupby(['user_id']).head(30)
 # lgb_predict = lgb_predict.drop_duplicates('user_id')

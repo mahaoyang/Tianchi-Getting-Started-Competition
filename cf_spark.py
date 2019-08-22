@@ -20,7 +20,7 @@ def trans_item(item_res):
 udf_timestamp = udf(timestamp, IntegerType())
 udf_trans_item = udf(trans_item, IntegerType())
 
-df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)[:10000]
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
 print(len(df))
@@ -41,7 +41,7 @@ als = ALS(
     ratingCol="behavior_type",
     coldStartStrategy="drop")
 model = als.fit(training)
-model.save('acie.model')
+# model.save('acie.model')
 
 # Evaluate the model by computing the RMSE on the test data
 predictions = model.transform(test)
@@ -76,7 +76,7 @@ for step in trange(1, len(users) + 1, batch_size):
     flag = user.values.tolist()
     if flag:
         user = spark.createDataFrame(user)
-        userSubsetRecs = model.recommendForUserSubset(user, 100)
+        userSubsetRecs = model.recommendForUserSubset(user, 10)
         # Generate top 10 user recommendations for a specified set of movies
         # movies = ratings.select(als.getItemCol()).distinct().limit(3)
         # movieSubSetRecs = model.recommendForItemSubset(movies, 30)

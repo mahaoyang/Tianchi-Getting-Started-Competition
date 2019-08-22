@@ -14,11 +14,13 @@ def timestamp(t):
 
 def read(data, lbe_store):
     # data['time'] = data['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
-    data['time'] = int(time.time())
     sparse_features = ["user_id", "item_id", "item_category", "time"]
     # 1.Label Encoding for sparse features,and do simple Transformation for dense features
     for feat in sparse_features:
-        data[feat] = lbe_store[feat].transform(data[feat])
+        try:
+            data[feat] = lbe_store[feat].transform(data[feat])
+        except:
+            print(11111,feat)
     # 2.count #unique features for each sparse field
     fixlen_feature_columns = [SparseFeat(feat, data[feat].nunique())
                               for feat in sparse_features]
@@ -50,6 +52,8 @@ if __name__ == "__main__":
 
     # 3.generate input data for model
     train, test = train_test_split(data, test_size=0.2)
+    train = train[:1000]
+    test = test[:200]
     train_model_input = [train[name].values for name in fixlen_feature_names]
     test_model_input = [test[name].values for name in fixlen_feature_names]
     # 4.Define Model,train,predict and evaluate
@@ -69,6 +73,7 @@ if __name__ == "__main__":
     item = item[['item_id', 'item_category']].drop_duplicates('item_id').astype('int32')
     # item = dict(zip(item['item_id'].values.tolist(), item['item_category'].values.tolist()))
     test = test.join(item.set_index('item_id'), on='item_id', how='left')
+    test['time'] = timestamp(pd.read_csv('data/tianchi_fresh_comp_train_user.csv')['time'].max())
     _, test_model_input = read(test.astype('int32'), lbe_store)
     pred_ans = model.predict(test_model_input, batch_size=256)
     pred_ans = pred_ans.reshape((1, -1)).tolist()[0]
@@ -76,7 +81,7 @@ if __name__ == "__main__":
     test['predict'] = pred_ans
     test = test[['user_id', 'item_id', 'predict']]
     test = test.sort_values(['user_id', 'predict'], ascending=[1, 0])
-    test = test.groupby(['user_id']).head(2)
+    test = test.groupby(['user_id']).head(3)
     # test = test.drop_duplicates('user_id')
     test = test[['user_id', 'item_id']]
     test.to_csv('submit.csv', index=None)
