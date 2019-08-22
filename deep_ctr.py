@@ -12,15 +12,13 @@ def timestamp(t):
     return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
-def read(data):
+def read(data, lbe_store):
     # data['time'] = data['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
     data['time'] = int(time.time())
     sparse_features = ["user_id", "item_id", "item_category", "time"]
-    target = ['behavior_type']
     # 1.Label Encoding for sparse features,and do simple Transformation for dense features
     for feat in sparse_features:
-        lbe = LabelEncoder()
-        data[feat] = lbe.fit_transform(data[feat])
+        data[feat] = lbe_store[feat].transform(data[feat])
     # 2.count #unique features for each sparse field
     fixlen_feature_columns = [SparseFeat(feat, data[feat].nunique())
                               for feat in sparse_features]
@@ -38,9 +36,11 @@ if __name__ == "__main__":
     sparse_features = ["user_id", "item_id", "item_category", "time"]
     target = ['behavior_type']
     # 1.Label Encoding for sparse features,and do simple Transformation for dense features
+    lbe_store = {}
     for feat in sparse_features:
         lbe = LabelEncoder()
         data[feat] = lbe.fit_transform(data[feat])
+        lbe_store[feat] = lbe
     # 2.count #unique features for each sparse field
     fixlen_feature_columns = [SparseFeat(feat, data[feat].nunique())
                               for feat in sparse_features]
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     item = item[['item_id', 'item_category']].drop_duplicates('item_id').astype('int32')
     # item = dict(zip(item['item_id'].values.tolist(), item['item_category'].values.tolist()))
     test = test.join(item.set_index('item_id'), on='item_id', how='left')
-    _, test_model_input = read(test.astype('int32'))
+    _, test_model_input = read(test.astype('int32'), lbe_store)
     pred_ans = model.predict(test_model_input, batch_size=256)
     pred_ans = pred_ans.reshape((1, -1)).tolist()[0]
     test = pd.read_csv('lgb_predict.csv')
