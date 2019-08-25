@@ -20,7 +20,7 @@ def trans_item(item_res):
 udf_timestamp = udf(timestamp, IntegerType())
 udf_trans_item = udf(trans_item, IntegerType())
 
-df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)[:10000]
+df = pd.read_csv("data/tianchi_fresh_comp_train_user.csv", low_memory=False)
 df = df[['user_id', 'item_id', 'behavior_type', 'item_category', 'time']]
 df['time'] = df['time'].apply(lambda x: timestamp(x), convert_dtype='int32')
 print(len(df))
@@ -34,7 +34,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=1, maxIter=1, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=400, maxIter=500, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -76,7 +76,7 @@ for step in trange(1, len(users) + 1, batch_size):
     flag = user.values.tolist()
     if flag:
         user = spark.createDataFrame(user)
-        userSubsetRecs = model.recommendForUserSubset(user, 10)
+        userSubsetRecs = model.recommendForUserSubset(user, 1000)
         # Generate top 10 user recommendations for a specified set of movies
         # movies = ratings.select(als.getItemCol()).distinct().limit(3)
         # movieSubSetRecs = model.recommendForItemSubset(movies, 30)

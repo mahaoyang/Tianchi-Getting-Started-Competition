@@ -2,9 +2,11 @@
 # -*- encoding: utf-8 -*-
 import time
 import json
+import random
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegressionCV as lrcv
@@ -14,8 +16,23 @@ def timestamp(t):
     return int(time.mktime(time.strptime(t, "%Y-%m-%d %H")))
 
 
-user = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:5000]
+def neg_sample(length):
+    return random.randint(0, length)
+
+
+user = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
+item_last = pd.read_csv('data/tianchi_fresh_comp_train_item.csv')['item_id'].values.tolist()
+user = user[(user['item_id'].isin(item_last))]
 user['time'] = user['time'].apply(lambda x: timestamp(x))
+item = user[['item_id', 'item_category']].drop_duplicates().values.tolist()
+item_length = len(item)
+print('item_length %s' % item_length)
+for index, row in tqdm(user.iterrows()):
+    row = row.values.tolist()
+    neg = item[neg_sample(item_length)]
+    row[1] = neg[0]
+    row[4] = neg[1]
+    user.loc[user.shape[0] + 1] = row
 label = user['behavior_type']
 feature = user[['user_id', 'item_id', 'item_category', 'time']]
 print(len(user))
@@ -31,14 +48,14 @@ params = {
     'boosting_type': 'gbdt',
     'objective': 'binary',
     'metric': {'l2', 'auc'},
-    'num_leaves': 31,
+    'num_leaves': 100,
     'learning_rate': 0.05,
     'feature_fraction': 0.9,
     'bagging_fraction': 0.8,
     'bagging_freq': 5,
     'verbose': 0
 }
-gbm = lgb.train(params, train, num_boost_round=10, valid_sets=test, early_stopping_rounds=1)
+gbm = lgb.train(params, train, num_boost_round=300, valid_sets=test, early_stopping_rounds=10)
 gbm.save_model('gbm.txt')
 y_pred = gbm.predict(test_x, num_iteration=gbm.best_iteration)
 print(y_pred)
@@ -49,7 +66,7 @@ feature['leaf'] = y_pred
 lr_cf = lrcv(Cs=[1], penalty="l2", tol=0.0001, max_iter=500, cv=5).fit(feature.as_matrix(),
                                                                        np.array(label.values.tolist()).reshape((-1, 1)))
 
-item = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:5000]
+item = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
 item['time'] = item['time'].apply(lambda x: timestamp(x))
 item = item[['item_id', 'item_category']].drop_duplicates(
     'item_id').astype('int32')
