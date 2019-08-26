@@ -62,18 +62,18 @@ def model_train(debug=False):
         train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:10000]
     else:
         train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
-    # train['time_slot'] = train['time'].map(lambda x: time_slot(x))
-    # train['day_offset'] = train['time'].map(lambda x: day_offset(x))
-    train['hour'] = train['time'].map(lambda x: x[-2:])
-    train['day'] = train['time'].map(lambda x: x[:10])
     for index, row in tqdm(train.iterrows()):
         row = row.values.tolist()
-        neg = train.sample(n=5)[['item_id', 'item_category']].values.tolist()
+        neg = train.sample(n=1)[['item_id', 'item_category']].values.tolist()
         for neg_i in neg:
             row[1] = neg_i[0]
             row[4] = neg_i[1]
             row[2] = 0
             train.loc[train.shape[0] + 1] = row
+    # train['time_slot'] = train['time'].map(lambda x: time_slot(x))
+    # train['day_offset'] = train['time'].map(lambda x: day_offset(x))
+    # train['hour'] = train['time'].map(lambda x: x[-2:])
+    train['day'] = train['time'].map(lambda x: x[:10])
     label = train['behavior_type']
     feature = train.drop(columns=['time', 'user_geohash', 'behavior_type'])
     feature = label_encode(feature)
@@ -122,8 +122,13 @@ def model_train(debug=False):
     cf = pd.read_csv('cf_predict.csv')
     item_last = pd.read_csv('data/tianchi_fresh_comp_train_item.csv')['item_id'].values.tolist()
     cf = cf[(cf['item_id'].isin(item_last))]
-
-    return x_train, x_test, y_train, y_test
+    cf['day'] = '2014-12-18'
+    cf = label_encode(cf)
+    lgb_predict = gbm.predict(cf, num_iteration=gbm.best_iteration)
+    lgb_predict = lgb_predict.argmax(axis=1)
+    lgb_predict = cf[lgb_predict >= 3]
+    lgb_predict = lgb_predict[['user_id', 'item_id']]
+    return lgb_predict
 
 
 if __name__ == '__main__':
