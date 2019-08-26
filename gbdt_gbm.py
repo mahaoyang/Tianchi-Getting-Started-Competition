@@ -46,7 +46,7 @@ test = lgb.Dataset(test_x, test_y, reference=train)
 params = {
     'task': 'train',
     'boosting_type': 'gbdt',
-    'objective': 'binary',
+    'objective': 'regression',
     'metric': {'l2', 'auc'},
     'num_leaves': 100,
     'learning_rate': 0.05,
