@@ -90,7 +90,7 @@ def model_train(debug=False):
         'objective': 'multiclass',  # 目标函数
         'num_class': 5,
         'metric': {'multi_logloss'},  # 评估函数
-        'num_leaves': 200,  # 叶子节点数
+        'num_leaves': 1000,  # 叶子节点数
         'learning_rate': 0.05,  # 学习速率
         'feature_fraction': 0.9,  # 建树的特征选择比例
         'bagging_fraction': 0.8,  # 建树的样本采样比例
@@ -99,23 +99,30 @@ def model_train(debug=False):
         'verbose': -1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
     }
 
-    print('Start training...')
     # 训练 cv and train
+    print('Start training...')
     gbm = lgb.train(params, lgb_train, num_boost_round=10, valid_sets=lgb_eval,
                     early_stopping_rounds=5)
 
-    print('Save model...')
     # 保存模型到文件
+    print('Save model...')
     gbm.save_model('lgb_model.txt')
 
-    print('Start predicting...')
     # 预测数据集
+    print('Start predicting...')
     y_pred = gbm.predict(x_test, num_iteration=gbm.best_iteration)
     # print(y_test)
     # print(y_pred)
 
     # 评估模型
     print('The accuracy of prediction is: %s' % multi_class_acc(y_test, y_pred))
+
+    # 生成提交结果
+    print('Creating submit.csv...')
+    cf = pd.read_csv('cf_predict.csv')
+    item_last = pd.read_csv('data/tianchi_fresh_comp_train_item.csv')['item_id'].values.tolist()
+    cf = cf[(cf['item_id'].isin(item_last))]
+
     return x_train, x_test, y_train, y_test
 
 
