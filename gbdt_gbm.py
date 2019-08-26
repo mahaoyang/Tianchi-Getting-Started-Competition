@@ -55,7 +55,7 @@ params = {
     'bagging_freq': 5,
     'verbose': 0
 }
-gbm = lgb.train(params, train, num_boost_round=300, valid_sets=test, early_stopping_rounds=10)
+gbm = lgb.train(params, train, num_boost_round=10, valid_sets=test, early_stopping_rounds=10)
 gbm.save_model('gbm.txt')
 y_pred = gbm.predict(test_x, num_iteration=gbm.best_iteration)
 print(y_pred)

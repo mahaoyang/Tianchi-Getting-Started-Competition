@@ -66,4 +66,4 @@ def multi_class_acc(y_test, y_pred):
 
 
 # 评估模型
-print('The rmse of prediction is: %s' % multi_class_acc(y_test, y_pred))
+print('The accuracy of prediction is: %s' % multi_class_acc(y_test, y_pred))
