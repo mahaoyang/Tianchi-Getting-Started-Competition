@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 iris = load_iris()
 data = iris.data
 target = iris.target
-X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=123)
+X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=321)
 
 # 加载你的数据
 # print('Load data...')
@@ -34,7 +34,7 @@ params = {
     'objective': 'multiclass',  # 目标函数
     'num_class': 3,
     'metric': {'multi_logloss'},  # 评估函数
-    'num_leaves': 100,  # 叶子节点数
+    'num_leaves': 3,  # 叶子节点数
     'learning_rate': 0.05,  # 学习速率
     'feature_fraction': 0.9,  # 建树的特征选择比例
     'bagging_fraction': 0.8,  # 建树的样本采样比例
@@ -45,8 +45,8 @@ params = {
 
 print('Start training...')
 # 训练 cv and train
-gbm = lgb.train(params, lgb_train, num_boost_round=10, valid_sets=lgb_eval,
-                early_stopping_rounds=20)
+gbm = lgb.train(params, lgb_train, num_boost_round=2, valid_sets=lgb_eval,
+                early_stopping_rounds=1)
 
 print('Save model...')
 # 保存模型到文件
@@ -55,8 +55,8 @@ gbm.save_model('model.txt')
 print('Start predicting...')
 # 预测数据集
 y_pred = gbm.predict(X_test, num_iteration=gbm.best_iteration)
-print(y_test)
-print(y_pred)
+# print(y_test)
+# print(y_pred)
 
 
 def multi_class_acc(y_test, y_pred):
