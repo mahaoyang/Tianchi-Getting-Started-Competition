@@ -64,7 +64,7 @@ def model_train(debug=False):
         train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
     for index, row in tqdm(train.iterrows()):
         row = row.values.tolist()
-        neg = train.sample(n=1)[['item_id', 'item_category']].values.tolist()
+        neg = train.sample(n=2)[['item_id', 'item_category']].values.tolist()
         for neg_i in neg:
             row[1] = neg_i[0]
             row[4] = neg_i[1]
@@ -79,6 +79,8 @@ def model_train(debug=False):
     feature = label_encode(feature)
     # last_day_label = label_encoder['day'].transform(['2014-12-12']).tolist()[0]
     # test = train[train['day'] == last_day_label]
+
+    # 拆分数据集
     x_train, x_test, y_train, y_test = train_test_split(feature, label, test_size=0.2,
                                                         random_state=321)
     lgb_train = lgb.Dataset(x_train, y_train)
@@ -128,6 +130,7 @@ def model_train(debug=False):
     lgb_predict = lgb_predict.argmax(axis=1)
     lgb_predict = cf[lgb_predict >= 3]
     lgb_predict = lgb_predict[['user_id', 'item_id']]
+    lgb_predict.to_csv('pure_lgb_predict.csv')
     return lgb_predict
 
 
