@@ -65,7 +65,7 @@ if __name__ == "__main__":
     fixlen_feature_names = get_fixlen_feature_names(linear_feature_columns + dnn_feature_columns)
 
     # 3.generate input data for model
-    data = data.sample(frac=0.01)
+    data = data.sample(frac=0.001)
     train, test = train_test_split(data, test_size=0.2)
     # train = train[:1000]
     # test = test[:200]

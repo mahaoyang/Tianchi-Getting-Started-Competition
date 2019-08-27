@@ -17,10 +17,11 @@ def timestamp(t):
 
 
 def neg_sample(length):
-    return random.randint(0, length)
+    return random.randint(0, length - 1)
 
 
 user = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
+user = user.sample(frac=0.1)
 item_last = pd.read_csv('data/tianchi_fresh_comp_train_item.csv')['item_id'].values.tolist()
 user = user[(user['item_id'].isin(item_last))]
 user['time'] = user['time'].apply(lambda x: timestamp(x))
@@ -31,6 +32,7 @@ for index, row in tqdm(user.iterrows()):
     row = row.values.tolist()
     neg = item[neg_sample(item_length)]
     row[1] = neg[0]
+    row[2] = 0
     row[4] = neg[1]
     user.loc[user.shape[0] + 1] = row
 label = user['behavior_type']
@@ -48,14 +50,14 @@ params = {
     'boosting_type': 'gbdt',
     'objective': 'regression',
     'metric': {'l2', 'auc'},
-    'num_leaves': 100,
+    'num_leaves': 50,
     'learning_rate': 0.05,
     'feature_fraction': 0.9,
     'bagging_fraction': 0.8,
     'bagging_freq': 5,
     'verbose': 0
 }
-gbm = lgb.train(params, train, num_boost_round=10, valid_sets=test, early_stopping_rounds=10)
+gbm = lgb.train(params, train, num_boost_round=100, valid_sets=test, early_stopping_rounds=10)
 gbm.save_model('gbm.txt')
 y_pred = gbm.predict(test_x, num_iteration=gbm.best_iteration)
 print(y_pred)
@@ -63,7 +65,7 @@ print(y_pred)
 
 y_pred = gbm.predict(feature, num_iteration=gbm.best_iteration)
 feature['leaf'] = y_pred
-lr_cf = lrcv(Cs=[1], penalty="l2", tol=0.0001, max_iter=500, cv=5).fit(feature.as_matrix(),
+lr_cf = lrcv(Cs=[1], penalty="l2", tol=0.0001, max_iter=200, cv=5).fit(feature.as_matrix(),
                                                                        np.array(label.values.tolist()).reshape((-1, 1)))
 
 item = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
@@ -81,8 +83,10 @@ y_pred = y_pred.tolist()
 print('leaf %s' % y_pred)
 lgb_predict = feature[['user_id', 'item_id', 'item_category', 'time']]
 lgb_predict['leaf'] = y_pred
+lgb_predict_m = lgb_predict.fillna(0).as_matrix()
 
-lr_predict = lr_cf.predict(lgb_predict.fillna(0).as_matrix()).tolist()
+
+lr_predict = lr_cf.predict(lgb_predict_m).tolist()
 lgb_predict['predict'] = lr_predict
 lgb_predict = lgb_predict.sort_values(['user_id', 'predict'], ascending=[1, 0])
 lgb_predict = lgb_predict.groupby(['user_id']).head(30)

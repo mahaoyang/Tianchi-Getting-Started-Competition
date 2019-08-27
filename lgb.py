@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
 from datetime import datetime
+from copy import deepcopy
+import os
 
 import numpy as np
 import pandas as pd
@@ -59,17 +61,27 @@ def multi_class_acc(y_test, y_pred):
 
 def model_train(debug=False):
     if debug:
-        train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:10000]
+        train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')[:1000000]
     else:
         train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
-    for index, row in tqdm(train.iterrows()):
-        row = row.values.tolist()
-        neg = train.sample(n=2)[['item_id', 'item_category']].values.tolist()
-        for neg_i in neg:
-            row[1] = neg_i[0]
-            row[4] = neg_i[1]
-            row[2] = 0
-            train.loc[train.shape[0] + 1] = row
+    train['behavior_type'] = 1
+    for i in tqdm(range(2)):
+        shuffle_item = train[['item_id', 'item_category']].sample(frac=1)
+        # shuffle_item = pd.concat([shuffle_item, shuffle_item, shuffle_item], ignore_index=True).sample(frac=1)[
+        #                :len(train)]
+        shuffle_train = deepcopy(train)
+        shuffle_train['item_id'] = shuffle_item['item_id']
+        shuffle_train['item_category'] = shuffle_item['item_category']
+        shuffle_train['behavior_type'] = 0
+        train = pd.concat([shuffle_train, train], ignore_index=True)
+    # for index, row in tqdm(train.iterrows()):
+    #     row = row.values.tolist()
+    #     neg = train.sample(n=2)[['item_id', 'item_category']].values.tolist()
+    #     for neg_i in neg:
+    #         row[1] = neg_i[0]
+    #         row[4] = neg_i[1]
+    #         row[2] = 0
+    #         train.loc[train.shape[0] + 1] = row
     # train['time_slot'] = train['time'].map(lambda x: time_slot(x))
     # train['day_offset'] = train['time'].map(lambda x: day_offset(x))
     # train['hour'] = train['time'].map(lambda x: x[-2:])
@@ -81,8 +93,8 @@ def model_train(debug=False):
     # test = train[train['day'] == last_day_label]
 
     # 拆分数据集
-    x_train, x_test, y_train, y_test = train_test_split(feature, label, test_size=0.2,
-                                                        random_state=321)
+    x_train, x_test, y_train, y_test = train_test_split(feature, label, test_size=0.1,
+                                                        random_state=54321)
     lgb_train = lgb.Dataset(x_train, y_train)
     lgb_eval = lgb.Dataset(x_test, y_test, reference=lgb_train)
     # 将参数写成字典下形式
@@ -90,10 +102,10 @@ def model_train(debug=False):
         'task': 'train',
         'boosting_type': 'gbdt',  # 设置提升类型
         'objective': 'multiclass',  # 目标函数
-        'num_class': 5,
+        'num_class': 2,
         'metric': {'multi_logloss'},  # 评估函数
-        'num_leaves': 1000,  # 叶子节点数
-        'learning_rate': 0.05,  # 学习速率
+        'num_leaves': 100,  # 叶子节点数
+        'learning_rate': 0.005,  # 学习速率
         'feature_fraction': 0.9,  # 建树的特征选择比例
         'bagging_fraction': 0.8,  # 建树的样本采样比例
         'bagging_freq': 10,  # k 意味着每 k 次迭代执行bagging
@@ -103,8 +115,7 @@ def model_train(debug=False):
 
     # 训练 cv and train
     print('Start training...')
-    gbm = lgb.train(params, lgb_train, num_boost_round=10, valid_sets=lgb_eval,
-                    early_stopping_rounds=5)
+    gbm = lgb.train(params, lgb_train, num_boost_round=10, valid_sets=lgb_eval, early_stopping_rounds=5)
 
     # 保存模型到文件
     print('Save model...')
@@ -126,13 +137,20 @@ def model_train(debug=False):
     cf = cf[(cf['item_id'].isin(item_last))]
     cf['day'] = '2014-12-18'
     cf = label_encode(cf)
-    lgb_predict = gbm.predict(cf, num_iteration=gbm.best_iteration)
-    lgb_predict = lgb_predict.argmax(axis=1)
-    lgb_predict = cf[lgb_predict >= 3]
-    lgb_predict = lgb_predict[['user_id', 'item_id']]
-    lgb_predict.to_csv('pure_lgb_predict.csv')
-    return lgb_predict
+    step = 5000000
+    for i in range(0, len(cf), step):
+        cf_temp = cf[i:i + step]
+        lgb_predict = gbm.predict(cf_temp, num_iteration=gbm.best_iteration)
+        lgb_predict = lgb_predict.argmax(axis=1)
+        lgb_predict = cf_temp[lgb_predict == 1]
+        lgb_predict = lgb_predict[['user_id', 'item_id']]
+        name = 'pure_lgb_predict.csv'
+        if not os.path.exists(name):
+            lgb_predict.to_csv(name, index=None, encoding='utf-8')
+        else:
+            lgb_predict.to_csv(name, index=None, header=None, mode='a+', encoding='utf-8')
 
 
 if __name__ == '__main__':
     model_train(True)
+    # model_train()
