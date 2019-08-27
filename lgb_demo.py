@@ -52,6 +52,8 @@ print('Save model...')
 # 保存模型到文件
 gbm.save_model('model.txt')
 
+# y_pred = gbm.predict(X_test, num_iteration=gbm.best_iteration, pred_leaf=True)
+# print(y_pred)
 print('Start predicting...')
 # 预测数据集
 y_pred = gbm.predict(X_test, num_iteration=gbm.best_iteration)
