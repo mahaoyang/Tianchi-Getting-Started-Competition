@@ -29,12 +29,12 @@ ratings = spark.createDataFrame(df)
 print('create spark DateFrame')
 # ratings = ratings.withColumn('time', udf_timestamp('time'))
 # print('trans time by udf')
-(training, test) = ratings.randomSplit([0.8, 0.2], seed=123)
+(training, test) = ratings.randomSplit([0.9, 0.1], seed=123)
 print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=400, maxIter=500, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=1000, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -88,8 +88,8 @@ for step in trange(1, len(users) + 1, batch_size):
             for ii in i[1]:
                 ur.append({'user_id': i[0], 'item_id': ii[0]})
         ur = pd.DataFrame(ur)
-        # name = 'tianchi_mobile_recommendation_predict.csv'
-        name = 'cf_predict.csv'
+        name = 'tianchi_mobile_recommendation_predict.csv'
+        # name = 'cf_predict.csv'
         if not os.path.exists(name):
             ur.to_csv(name, index=None, encoding='utf-8')
         else:
