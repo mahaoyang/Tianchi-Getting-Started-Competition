@@ -65,7 +65,7 @@ def model_train(debug=False):
     else:
         train = pd.read_csv('data/tianchi_fresh_comp_train_user.csv')
     train['behavior_type'] = 1
-    for i in tqdm(range(2)):
+    for _ in tqdm(range(2)):
         shuffle_item = train[['item_id', 'item_category']].sample(frac=1)
         # shuffle_item = pd.concat([shuffle_item, shuffle_item, shuffle_item], ignore_index=True).sample(frac=1)[
         #                :len(train)]
