@@ -5,6 +5,7 @@ from pyspark.sql.functions import udf
 from spark_session import spark
 from tqdm import trange, tqdm
 import pandas as pd
+import datetime
 import time
 import os
 
@@ -34,7 +35,7 @@ print('build train data success')
 # Build the recommendation model using ALS on the training data
 # Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
 als = ALS(
-    numItemBlocks=16, rank=1000, maxIter=1000, regParam=1, implicitPrefs=False, alpha=1,
+    numItemBlocks=16, rank=3, maxIter=10, regParam=1, implicitPrefs=False, alpha=1,
     nonnegative=False,
     userCol="user_id",
     itemCol="item_id",
@@ -71,12 +72,13 @@ print("Root-mean-square error = " + str(rmse))
 users = pd.DataFrame(list(set(df['user_id'].values.tolist())))[:5000]
 users.columns = ['user_id']
 batch_size = 1000
+print(datetime.datetime.now().date())
 for step in trange(1, len(users) + 1, batch_size):
     user = users[-(step + batch_size): -step]
     flag = user.values.tolist()
     if flag:
         user = spark.createDataFrame(user)
-        userSubsetRecs = model.recommendForUserSubset(user, 1000)
+        userSubsetRecs = model.recommendForUserSubset(user, 100)
         # Generate top 10 user recommendations for a specified set of movies
         # movies = ratings.select(als.getItemCol()).distinct().limit(3)
         # movieSubSetRecs = model.recommendForItemSubset(movies, 30)
@@ -100,3 +102,5 @@ for step in trange(1, len(users) + 1, batch_size):
         # movieSubSetRecs.show(truncate=False)
 
 spark.stop()
+
+print(datetime.datetime.now().date())
